@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Juspay</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
+    <style>
+        html,
+        body {
+            height: 100%;
+            font-family: 'Roboto';
+            font-size: 15px;
+            color: #333333;
+        }
+        
+        @media only screen and (max-width: 374px) {
+            html,
+            body {
+                font-size: 12px !important;
+            }
+        }
+        
+        @media only screen and (min-width: 375px) and (max-width: 428px) {
+            html,
+            body {
+                font-size: 14px !important;
+            }
+        }
+        
+        .loader-container {
+            height: 85%;
+            margin: 0 10%;
+        }
+        
+        .cancel-txn-container {
+            margin: 0 10%;
+        }
+        
+        .flex-box {
+            display: -webkit-flexbox;
+            display: -ms-flexbox;
+            display: -webkit-flex;
+            display: flex;
+            -webkit-flex-align: center;
+            -ms-flex-align: center;
+            -webkit-align-items: center;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-default,
+        .btn-default:hover,
+        btn-default:active,
+        btn-default:visited,
+        a:visited,
+        a:active,
+        a:hover {
+            color: #0067f0;
+            outline: none;
+            background-color: #fff;
+        }
+        
+        .mobile-btn {
+            border: none;
+        }
+        
+        .juspay-text-container {
+            margin: 12px auto;
+        }
+        
+        .message-container {
+            margin: 32px auto;
+            text-align: center;
+        }
+        
+        .timer-container {
+            margin: 32px auto;
+        }
+        
+        .juspay-text {
+            font-weight: lighter !important;
+            font-size: 12px !important;
+            opacity: 0.7;
+        }
+        
+        .text-bold {
+            font-weight: bold !important;
+        }
+        
+        .btn-custom {
+            display: inline-block;
+            padding: 6px 12px;
+            margin-bottom: 0;
+            font-size: 14px;
+            font-weight: normal;
+            line-height: 1.428571429;
+            text-align: center;
+            vertical-align: middle;
+            cursor: pointer;
+            border: 1px solid;
+            border-radius: 4px;
+            white-space: nowrap;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            -o-user-select: none;
+            user-select: none;
+        }
+        
+        #juspay-logo {
+            width: 46px;
+            height: 46px;
+            -webkit-animation-name: spin;
+            -webkit-animation-duration: 2000ms;
+            -webkit-animation-iteration-count: infinite;
+            -webkit-animation-timing-function: linear;
+            -moz-animation-name: spin;
+            -moz-animation-duration: 2000ms;
+            -moz-animation-iteration-count: infinite;
+            -moz-animation-timing-function: linear;
+            -ms-animation-name: spin;
+            -ms-animation-duration: 2000ms;
+            -ms-animation-iteration-count: infinite;
+            -ms-animation-timing-function: linear;
+            animation-name: spin;
+            animation-duration: 2000ms;
+            animation-iteration-count: infinite;
+            animation-timing-function: linear;
+        }
+        
+        @-ms-keyframes spin {
+            from {
+                -ms-transform: rotate(0deg);
+            }
+            to {
+                -ms-transform: rotate(360deg);
+            }
+        }
+        
+        @-moz-keyframes spin {
+            from {
+                -moz-transform: rotate(0deg);
+            }
+            to {
+                -moz-transform: rotate(360deg);
+            }
+        }
+        
+        @-webkit-keyframes spin {
+            from {
+                -webkit-transform: rotate(0deg);
+            }
+            to {
+                -webkit-transform: rotate(360deg);
+            }
+        }
+        
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+    <script type='text/javascript'>
+        var pageExpiry = '${inputPageExpiry}';
+        var timerVal = pageExpiry;
+        var start = Date.now();
+        var countDownInterval = setInterval(function() {
+            var delta = Date.now() - start;
+            var secondsElapsed = Math.floor(delta / 1000);
+            var timer = timerVal.split(':');
+            var minutes = parseInt(timer[0], 10);
+            var seconds = parseInt(timer[1], 10);
+            var remainingSeconds = ((minutes * 60) + seconds) - secondsElapsed;
+            seconds = remainingSeconds % 60;
+            minutes = Math.floor(remainingSeconds / 60);
+            if (minutes < 0) {
+                clearInterval(countDownInterval);
+                window.location.href = window.location.origin + '${finishPath}';
+            } else {
+                seconds = (seconds < 10) ? '0' + seconds : seconds;
+                minutes = (minutes < 10) ? '0' + minutes : minutes;
+                var countdownElement = document.getElementById('countdown');
+                countdownElement.innerHTML = minutes + ':' + seconds + ' min';
+            }
+        }, 1000);
+        var statusCheck = function(retryFunc) {
+            const userAction = async() => {
+                let response = await fetch(window.location.origin + '${paymentStatusPath}');
+                let data = await response.json();
+                if (data.status !== 'PENDING_VBV' && data.status !== 'AUTHORIZING' && data.status !== 'PENDING_AUTHENTICATION') {
+                    var returnUrl = data.return_url ? data.return_url : (window.location.origin + '${finishPath}');
+                    window.location.href = returnUrl;
+                }
+            };
+            userAction();
+            chainCall();
+        };
+        var chainCall = function() {
+            window.setTimeout(function() {
+                statusCheck(chainCall);
+            }, 5000);
+        };
+        window.setTimeout(chainCall, 1000);
+
+        function cancelTransaction() {
+            if (confirm('Are you sure you want to cancel this transaction?')) {
+                window.location.href = (window.location.origin + '${cancelPath}');
+            }
+        };
+
+        function setVisibility() {
+            this.isUpiTransaction = '${inputUpiTxn}';
+            this.isPayeeVpaPresent = '${inputVpaPresent}';
+            this.payeeVpa = '${inputPayeeVpa}';
+            if (isUpiTransaction) {
+                if (isPayeeVpaPresent) {
+                    var elem1 = document.getElementById('cont1');
+                    document.getElementById('cont1').style.display = 'block';
+                    document.getElementById('cont1-1').style.display = 'block';
+                    document.getElementById('cont1-1').innerText = payeeVpa;
+                } else {
+                    var elem2 = document.getElementById('cont2');
+                    document.getElementById('cont2').style.display = 'block';
+                }
+            } else {
+                var elem3 = document.getElementById('cont3');
+                document.getElementById('cont3').style.display = 'block';
+            }
+            document.getElementById('countdown').innerText = pageExpiry;
+        }
+    </script>
+</head>
+
+<body onload=s etVisibility()>
+    <div class='loader-container flex-box'>
+        <div>
+            <div class='flex-box'><img id='juspay-logo' src='data:image/png;base64,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'
+                /></div>
+            <div class='juspay-text-container flex-box'>
+                <div class='juspay-text'>JUSPAY</div>
+            </div>
+            <div class='message-container'><span id='cont1' style='display:none'>Please go to your UPI app and approve the payment request sent by&nbsp;&nbsp;</span><span id='cont1-1' style='display:none' class='text-bold flex-box '>${payeeVpa}&nbsp;</span><span id='cont2' style='display:none'>Please go to your UPI app and approve the payment request</span>
+                <span id='cont3' style='display:none'>Please wait while your payment is being processed</span>
+            </div>
+            <div class='timer-container flex-box'>This page will expire in&nbsp;<span class='text-bold' id='countdown'>'</span></div>
+        </div>
+    </div>
+    <div class='cancel-txn-container flex-box'>
+        <div><a class='btn-custom btn-default' onclick='cancelTransaction()'>Cancel Transaction</a></div>
+    </div>
+</body>
+
+</html>

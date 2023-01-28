@@ -12,6 +12,7 @@
 			padding: 0px;
 			margin: 0;
 			overflow: hidden;
+			/* display: none; */
 		}
 
 		* {
@@ -214,6 +215,23 @@
 		.trigger:nth-child(9):hover~.card {
 			transform: rotateY(-8deg) rotateX(5deg);
 		}
+
+		@media  screen and (max-width: 700px) {
+			.screen{
+				display: none;
+			}
+			
+			.buttons{
+				display: none;
+			}
+		}
+
+		@media  screen and (min-width: 700px) {
+			.removescreeen{
+				display: none;
+			}
+		}
+
 	</style>
 </head>
 
@@ -254,6 +272,10 @@
 
 		</div>
 	</div>
+
+	<p class="removescreeen">
+		Open this in your laptop dear. 
+	</p>
 
 </body>
 
